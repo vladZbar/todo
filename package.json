@@ -17,8 +17,14 @@
     "eject": "react-scripts eject",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky install"
   },
+  "lint-staged": {
+  "*.js": [
+    "eslint --fix",
+    "git add"
+  ]},
   "eslintConfig": {
     "extends": [
       "react-app",
