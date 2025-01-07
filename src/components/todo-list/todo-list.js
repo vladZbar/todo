@@ -71,15 +71,7 @@ export default class TodoList extends React.Component {
       const { editingId } = this.state
 
       return (
-        <li
-          key={id}
-          className={editingId === id ? 'editing' : done ? 'completed' : ''}
-          onClick={(e) => {
-            // e.preventDefault()
-            onToggleDone(id)
-            e.stopPropagation()
-          }}
-        >
+        <li key={id} className={editingId === id ? 'editing' : done ? 'completed' : ''}>
           <TodoListItem
             id={id}
             data={content}

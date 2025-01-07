@@ -19,64 +19,31 @@ export default class TodoListItem extends React.Component {
     onToggleDone: PropTypes.func,
     changeItem: PropTypes.func,
     done: PropTypes.bool,
+    date: PropTypes.instanceOf(Date),
+    timerMin: PropTypes.number,
+    timerSec: PropTypes.number,
   }
 
   clickTimer(e) {
     e.stopPropagation()
-    this.startTimer(this.props.id)
-    // console.log('Timer clicked for ID:', this.props.id)
+    this.props.startTimer()
   }
 
   stop(e) {
     e.stopPropagation()
-    this.stopTimer(this.props.id)
+    this.props.stopTimer()
   }
-
-  // startTimer
 
   state = {
-    min: this.props.timerMin, // Начальные минуты
-    sec: this.props.timerSec, // Начальные секунды
+    id: this.props.id,
+    min: this.props.timerMin,
+    sec: this.props.timerSec,
     timerId: null,
-    countingUp: false, // Состояние для отслеживания направления таймера
-  }
-
-  startTimer = () => {
-    if (this.state.timerId) clearInterval(this.state.timerId) // Очищаем предыдущий таймер
-
-    const timerId = setInterval(() => {
-      this.setState(({ min, sec, countingUp }) => {
-        if (!countingUp) {
-          // Таймер идет вниз
-          if (sec > 0) {
-            return { sec: sec - 1 }
-          } else if (min > 0) {
-            return { min: min - 1, sec: 59 }
-          } else {
-            // Таймер достиг нуля, начинаем обратный отсчет
-            return { countingUp: true, min: 0, sec: 0 } // Сбросим до 0
-          }
-        } else {
-          // Таймер идет вверх
-          if (sec < 59) {
-            return { sec: sec + 1 }
-          } else {
-            return { min: min + 1, sec: 0 }
-          }
-        }
-      })
-    }, 1000) // Интервал 1000 мс (1 секунда)
-
-    this.setState({ timerId })
-  }
-
-  stopTimer = () => {
-    clearInterval(this.state.timerId)
-    this.setState({ timerId: null })
+    countingUp: false,
   }
 
   componentWillUnmount() {
-    clearInterval(this.state.timerId)
+    this.props.stopTimer(this.props.id)
   }
 
   xxx(e) {
@@ -85,19 +52,10 @@ export default class TodoListItem extends React.Component {
   }
 
   render() {
-    const { data, onDeleted, onToggleDone, done, date } = this.props
-    const { min, sec } = this.state
+    const { data, onDeleted, onToggleDone, done, date, timerMin, timerSec, id } = this.props
     return (
       <div className="view">
-        <input
-          className="toggle"
-          type="checkbox"
-          checked={done}
-          onChange={(e) => {
-            e.stopPropagation()
-            onToggleDone
-          }}
-        />
+        <input className="toggle" type="checkbox" checked={done} onChange={() => onToggleDone(id)} />
         <label>
           <span
             onClick={(e) => {
@@ -109,9 +67,19 @@ export default class TodoListItem extends React.Component {
             {data}
           </span>
           <span className="description">
-            <button onClick={(e) => this.clickTimer(e)} className="icon icon-play"></button>
-            <button onClick={(e) => this.stop(e)} className="icon icon-pause"></button>
-            <span>{`${min}:${sec < 10 ? `0${sec}` : sec}`}</span>
+            <button
+              onClick={(e) => {
+                this.clickTimer(e)
+              }}
+              className="icon icon-play"
+            ></button>
+            <button
+              onClick={(e) => {
+                this.stop(e)
+              }}
+              className="icon icon-pause"
+            ></button>
+            <span>{`${timerMin}:${timerSec < 10 ? `0${timerSec}` : timerSec}`}</span>
           </span>
           <span className="description">
             {`created ${formatDistanceToNow(date, {

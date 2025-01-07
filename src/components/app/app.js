@@ -9,83 +9,6 @@ export default class App extends Component {
     todoData: [],
     filter: 'All',
   }
-  // startTimer(minutes, seconds) {
-  //   // Проверяем, чтобы минуты и секунды были неотрицательными
-  //   if (minutes < 0 || seconds < 0) {
-  //     console.error('Минуты и секунды должны быть неотрицательными числами.')
-  //     return
-  //   }
-
-  //   let totalSeconds = minutes * 60 + seconds // Переводим всё в секунды
-
-  //   const timerId = setInterval(() => {
-  //     // Вычисляем оставшиеся минуты и секунды
-  //     const minutesLeft = Math.floor(totalSeconds / 60)
-  //     const secondsLeft = totalSeconds % 60
-
-  //     // Форматируем минуты и секунды с ведущими нулями
-  //     const formattedMinutes = String(minutesLeft).padStart(2, '0')
-  //     const formattedSeconds = String(secondsLeft).padStart(2, '0')
-
-  //     // Выводим таймер в консоль
-  //     console.log(`${formattedMinutes}:${formattedSeconds}`)
-
-  //     // Уменьшаем общее количество секунд
-  //     totalSeconds++
-
-  //     // Останавливаем таймер после достижения 24 часов (86400 секунд)
-  //     if (totalSeconds >= 86400) {
-  //       clearInterval(timerId)
-  //       console.log('Таймер завершен.')
-  //     }
-  //   }, 1000) // Интервал 1000 мс (1 секунда)
-  // }
-
-  // startTimer = (id) => {
-  //   const updatedTodos = this.state.todoData.map((todo) => {
-  //     if (todo.id === id) {
-  //       if (todo.timerId) clearInterval(todo.timerId) // Очищаем предыдущий таймер
-
-  //       let totalSeconds = todo.timerMin * 60 + todo.timerSec // Переводим минуты и секунды в общее количество секунд
-
-  //       const timerId = setInterval(() => {
-  //         this.setState(({ todoData }) => {
-  //           return todoData.map((t) => {
-  //             if (t.id === id) {
-  //               if (totalSeconds > 0) {
-  //                 totalSeconds-- // Уменьшаем общее количество секунд
-  //                 const minutesLeft = Math.floor(totalSeconds / 60)
-  //                 const secondsLeft = totalSeconds % 60
-  //                 return { ...t, timerMin: minutesLeft, timerSec: secondsLeft } // Обновляем состояние
-  //               } else {
-  //                 clearInterval(timerId) // Останавливаем таймер при достижении нуля
-  //                 return { ...t, countingUp: true } // Меняем направление таймера
-  //               }
-  //             }
-  //             return t // Возвращаем остальные элементы без изменений
-  //           })
-  //         })
-  //       }, 1000) // Интервал 1000 мс (1 секунда)
-
-  //       return { ...todo, timerId } // Сохраняем ID таймера в состоянии
-  //     }
-  //     return todo // Возвращаем остальные элементы без изменений
-  //   })
-
-  //   this.setState({ todoData: updatedTodos }) // Обновляем состояние todoData
-  // }
-
-  // stopTimer = (id) => {
-  //   const updatedTodos = this.state.todoData.map((todo) => {
-  //     if (todo.id === id) {
-  //       clearInterval(todo.timerId) // Очищаем таймер
-  //       return { ...todo, timerId: null } // Сбрасываем ID таймера
-  //     }
-  //     return todo
-  //   })
-
-  //   this.setState({ todoData: updatedTodos })
-  // }
 
   createTodoItem(text, min = 0, sec = 0) {
     return {
@@ -97,6 +20,7 @@ export default class App extends Component {
       date: new Date(),
       timerMin: Number(min),
       timerSec: Number(sec),
+      timerId: null,
     }
   }
 
@@ -150,7 +74,9 @@ export default class App extends Component {
   }
 
   handleFilterChange = (filter) => {
-    this.setState({ filter })
+    this.setState({ filter }, () => {
+      this.startAllTimers()
+    })
   }
 
   changeItem = (id, newContent) => {
@@ -171,18 +97,72 @@ export default class App extends Component {
     })
   }
 
-  // componentDidMount() {
-  //   this.setState({ originalTodoData: [...this.state.todoData] })
-  //   this.timerID = setInterval(() => this.startTimer(), 1000)
-  // }
+  startTimer = (id) => {
+    const timerId = setInterval(() => {
+      this.setState(({ todoData }) => {
+        const idx = todoData.findIndex((el) => el.id === id)
+        if (idx === -1) return
 
-  // componentWillUnmount() {
-  //   clearInterval(this.timerID)
-  // }
+        const { timerMin, timerSec, done } = todoData[idx]
+
+        if (done) {
+          return
+        }
+
+        if (timerSec > 0) {
+          return {
+            todoData: [
+              ...todoData.slice(0, idx),
+              { ...todoData[idx], timerSec: timerSec - 1 },
+              ...todoData.slice(idx + 1),
+            ],
+          }
+        } else if (timerMin > 0) {
+          return {
+            todoData: [
+              ...todoData.slice(0, idx),
+              { ...todoData[idx], timerMin: timerMin - 1, timerSec: 59 },
+              ...todoData.slice(idx + 1),
+            ],
+          }
+        } else {
+          clearInterval(timerId)
+          return null
+        }
+      })
+    }, 1000)
+
+    this.setState(({ todoData }) => {
+      return {
+        todoData: todoData.map((todo) => (todo.id === id ? { ...todo, timerId } : todo)),
+      }
+    })
+  }
+
+  stopTimer = (id) => {
+    this.setState(({ todoData }) => {
+      const idx = todoData.findIndex((el) => el.id === id)
+      if (idx !== -1 && todoData[idx].timerId) {
+        clearInterval(todoData[idx].timerId)
+        return {
+          todoData: todoData.map((todo) => (todo.id === id ? { ...todo, timerId: null } : todo)),
+        }
+      }
+      return null
+    })
+  }
+
+  startAllTimers = () => {
+    this.state.todoData.forEach((todo) => {
+      if (todo.timerId === null) return
+      if (todo.timerId) {
+        clearInterval(todo.timerId)
+      }
+      this.startTimer(todo.id)
+    })
+  }
 
   render() {
-    // this.startTimer(0, 0)
-
     const { todoData, filter } = this.state
     const filteredTodos = todoData.filter((todo) => {
       if (filter === 'All') return true
