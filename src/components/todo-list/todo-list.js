@@ -66,7 +66,7 @@ export default class TodoList extends React.Component {
       this.props
 
     const elements = todos.map((toDoItem) => {
-      const { id, content, done, date, timerMin, timerSec } = toDoItem
+      const { id, content, done, date, timerMin, timerSec, runing, timerId } = toDoItem
       const isDone = done || false
       const { editingId } = this.state
 
@@ -84,6 +84,8 @@ export default class TodoList extends React.Component {
             timerSec={timerSec}
             startTimer={() => startTimer(id)}
             stopTimer={() => stopTimer(id)}
+            runing={runing}
+            timerId={timerId}
           />
           {this.state.editingId === id && (
             <input

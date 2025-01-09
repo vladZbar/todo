@@ -21,6 +21,7 @@ export default class App extends Component {
       timerMin: Number(min),
       timerSec: Number(sec),
       timerId: null,
+      runing: false,
     }
   }
 
@@ -98,6 +99,9 @@ export default class App extends Component {
   }
 
   startTimer = (id) => {
+    const element = this.state.todoData.filter((el) => el.id === id)[0]
+    if (element.isRaning && element.timerId) return
+
     const timerId = setInterval(() => {
       this.setState(({ todoData }) => {
         const idx = todoData.findIndex((el) => el.id === id)
@@ -150,6 +154,14 @@ export default class App extends Component {
       }
       return null
     })
+  }
+
+  componentDidMount() {
+    this.startAllTimers()
+  }
+
+  componentWillUnmount() {
+    this.startAllTimers()
   }
 
   startAllTimers = () => {

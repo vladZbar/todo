@@ -26,12 +26,16 @@ export default class TodoListItem extends React.Component {
 
   clickTimer(e) {
     e.stopPropagation()
-    this.props.startTimer()
+    if (!this.state.runing && !this.props.timerId) {
+      this.props.startTimer()
+      this.setState({ runing: true })
+    }
   }
 
   stop(e) {
     e.stopPropagation()
     this.props.stopTimer()
+    this.setState({ runing: false })
   }
 
   state = {
@@ -40,6 +44,7 @@ export default class TodoListItem extends React.Component {
     sec: this.props.timerSec,
     timerId: null,
     countingUp: false,
+    runing: this.props.runing,
   }
 
   componentWillUnmount() {
