@@ -8,10 +8,9 @@ export default class App extends Component {
   state = {
     todoData: [],
     filter: 'All',
-    // date: new Date()
   }
 
-  createTodoItem(text) {
+  createTodoItem(text, min = 0, sec = 0) {
     return {
       className: '',
       id: Math.random().toString(36).slice(2),
@@ -19,6 +18,10 @@ export default class App extends Component {
       content: text,
       done: false,
       date: new Date(),
+      timerMin: Number(min),
+      timerSec: Number(sec),
+      timerId: null,
+      runing: false,
     }
   }
 
@@ -31,11 +34,11 @@ export default class App extends Component {
     })
   }
 
-  addItem = (text) => {
+  addItem = (text, min, sec) => {
     text = text.trim()
 
     if (text.length > 0) {
-      const newItem = this.createTodoItem(text)
+      const newItem = this.createTodoItem(text, min, sec)
 
       this.setState(({ todoData }) => ({
         todoData: [...todoData, newItem],
@@ -72,7 +75,9 @@ export default class App extends Component {
   }
 
   handleFilterChange = (filter) => {
-    this.setState({ filter })
+    this.setState({ filter }, () => {
+      this.startAllTimers()
+    })
   }
 
   changeItem = (id, newContent) => {
@@ -84,11 +89,88 @@ export default class App extends Component {
       const newItem = {
         ...oldItem,
         content: newContent,
+        done: false,
       }
 
       return {
         todoData: [...todoData.slice(0, idx), newItem, ...todoData.slice(idx + 1)],
       }
+    })
+  }
+
+  startTimer = (id) => {
+    const element = this.state.todoData.filter((el) => el.id === id)[0]
+    if (element.isRaning && element.timerId) return
+
+    const timerId = setInterval(() => {
+      this.setState(({ todoData }) => {
+        const idx = todoData.findIndex((el) => el.id === id)
+        if (idx === -1) return
+
+        const { timerMin, timerSec, done } = todoData[idx]
+
+        if (done) {
+          return
+        }
+
+        if (timerSec > 0) {
+          return {
+            todoData: [
+              ...todoData.slice(0, idx),
+              { ...todoData[idx], timerSec: timerSec - 1 },
+              ...todoData.slice(idx + 1),
+            ],
+          }
+        } else if (timerMin > 0) {
+          return {
+            todoData: [
+              ...todoData.slice(0, idx),
+              { ...todoData[idx], timerMin: timerMin - 1, timerSec: 59 },
+              ...todoData.slice(idx + 1),
+            ],
+          }
+        } else {
+          clearInterval(timerId)
+          return null
+        }
+      })
+    }, 1000)
+
+    this.setState(({ todoData }) => {
+      return {
+        todoData: todoData.map((todo) => (todo.id === id ? { ...todo, timerId } : todo)),
+      }
+    })
+  }
+
+  stopTimer = (id) => {
+    this.setState(({ todoData }) => {
+      const idx = todoData.findIndex((el) => el.id === id)
+      if (idx !== -1 && todoData[idx].timerId) {
+        clearInterval(todoData[idx].timerId)
+        return {
+          todoData: todoData.map((todo) => (todo.id === id ? { ...todo, timerId: null } : todo)),
+        }
+      }
+      return null
+    })
+  }
+
+  componentDidMount() {
+    this.startAllTimers()
+  }
+
+  componentWillUnmount() {
+    this.startAllTimers()
+  }
+
+  startAllTimers = () => {
+    this.state.todoData.forEach((todo) => {
+      if (todo.timerId === null) return
+      if (todo.timerId) {
+        clearInterval(todo.timerId)
+      }
+      this.startTimer(todo.id)
     })
   }
 
@@ -116,6 +198,8 @@ export default class App extends Component {
           onFilterChange={this.handleFilterChange}
           changeItem={this.changeItem}
           addItem={this.addItem}
+          startTimer={this.startTimer}
+          stopTimer={this.stopTimer}
         />
       </section>
     )

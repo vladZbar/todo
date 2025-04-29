@@ -19,17 +19,74 @@ export default class TodoListItem extends React.Component {
     onToggleDone: PropTypes.func,
     changeItem: PropTypes.func,
     done: PropTypes.bool,
+    date: PropTypes.instanceOf(Date),
+    timerMin: PropTypes.number,
+    timerSec: PropTypes.number,
+  }
+
+  clickTimer(e) {
+    e.stopPropagation()
+    if (!this.state.runing && !this.props.timerId) {
+      this.props.startTimer()
+      this.setState({ runing: true })
+    }
+  }
+
+  stop(e) {
+    e.stopPropagation()
+    this.props.stopTimer()
+    this.setState({ runing: false })
+  }
+
+  state = {
+    id: this.props.id,
+    min: this.props.timerMin,
+    sec: this.props.timerSec,
+    timerId: null,
+    countingUp: false,
+    runing: this.props.runing,
+  }
+
+  componentWillUnmount() {
+    this.props.stopTimer(this.props.id)
+  }
+
+  xxx(e) {
+    e.stopPropagation()
+    this.props.changeItem()
   }
 
   render() {
-    const { data, onDeleted, onToggleDone, done, changeItem, date } = this.props
-
+    const { data, onDeleted, onToggleDone, done, date, timerMin, timerSec, id } = this.props
     return (
       <div className="view">
-        <input className="toggle" type="checkbox" checked={done} onChange={() => onToggleDone} />
+        <input className="toggle" type="checkbox" checked={done} onChange={() => onToggleDone(id)} />
         <label>
-          <span className="description">{data}</span>
-          <span className="created">
+          <span
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            className="titl"
+          >
+            {data}
+          </span>
+          <span className="description">
+            <button
+              onClick={(e) => {
+                this.clickTimer(e)
+              }}
+              className="icon icon-play"
+            ></button>
+            <button
+              onClick={(e) => {
+                this.stop(e)
+              }}
+              className="icon icon-pause"
+            ></button>
+            <span>{`${timerMin}:${timerSec < 10 ? `0${timerSec}` : timerSec}`}</span>
+          </span>
+          <span className="description">
             {`created ${formatDistanceToNow(date, {
               includeSeconds: true,
               locale: KG,
@@ -37,7 +94,7 @@ export default class TodoListItem extends React.Component {
             })}`}
           </span>
         </label>
-        <button className="icon icon-edit" onClick={changeItem}></button>
+        <button className="icon icon-edit" onClick={(e) => this.xxx(e)}></button>
         <button className="icon icon-destroy" onClick={onDeleted}></button>
       </div>
     )

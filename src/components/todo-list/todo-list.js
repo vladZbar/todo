@@ -62,26 +62,30 @@ export default class TodoList extends React.Component {
   }
 
   render() {
-    const { todos, onDeleted, onToggleDone, allTasks, completeDeleted, onFilterChange } = this.props
+    const { todos, onDeleted, onToggleDone, allTasks, completeDeleted, onFilterChange, startTimer, stopTimer } =
+      this.props
 
     const elements = todos.map((toDoItem) => {
-      const { id, content, done, date } = toDoItem
+      const { id, content, done, date, timerMin, timerSec, runing, timerId } = toDoItem
       const isDone = done || false
       const { editingId } = this.state
 
       return (
-        <li
-          key={id}
-          className={editingId === id ? 'editing' : done ? 'completed' : ''}
-          onClick={() => onToggleDone(id)}
-        >
+        <li key={id} className={editingId === id ? 'editing' : done ? 'completed' : ''}>
           <TodoListItem
+            id={id}
             data={content}
             onDeleted={() => onDeleted(id)}
             onToggleDone={() => onToggleDone(id)}
             done={isDone}
             changeItem={() => this.startEditing(id, content)}
             date={date}
+            timerMin={timerMin}
+            timerSec={timerSec}
+            startTimer={() => startTimer(id)}
+            stopTimer={() => stopTimer(id)}
+            runing={runing}
+            timerId={timerId}
           />
           {this.state.editingId === id && (
             <input
